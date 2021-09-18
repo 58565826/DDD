@@ -4,6 +4,7 @@ requests.packages.urllib3.disable_warnings()
 ws=sys.argv[1]
 def getsign():
     try:
+       #sign = 'https://pan.smxy.xyz/sign'
         sign = 'https://sign.smxy.xyz/sign' # sign
         s = requests.get(url=sign).json()
         svv = s['sv']

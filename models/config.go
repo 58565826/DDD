@@ -31,6 +31,9 @@ type Yaml struct {
 	QbotPublicMode      bool   `yaml:"qbot_public_mode"`
 	DailyAssetPushCron  string `yaml:"daily_asset_push_cron"`
 	Version             string `yaml:"version"`
+	CTime               string `yaml:"AtTime"`
+	IsHelp              bool   `yaml:"IsHelp"`
+	IsOldV4             bool   `yaml:"IsOldV4"`
 	Node                string
 	Npm                 string
 	Python              string
@@ -82,6 +85,9 @@ func initConfig() {
 	}
 	if Config.Master == "" {
 		Config.Master = "xxxx"
+	}
+	if Config.CTime == "" {
+		Config.CTime = "10"
 	}
 	if Config.Mode != Parallel {
 		Config.Mode = Balance

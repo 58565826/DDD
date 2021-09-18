@@ -43,6 +43,7 @@ func initDB() {
 		&Env{},
 		&Wish{},
 		&Token{},
+		&UserAdmin{},
 	)
 	keys = make(map[string]bool)
 	pins = make(map[string]bool)
@@ -82,7 +83,7 @@ type JdCookie struct {
 	ID           int    `gorm:"column:ID;primaryKey"`
 	Priority     int    `gorm:"column:Priority;default:1"`
 	CreateAt     string `gorm:"column:CreateAt"`
-	LoseAt       string `gorm:"column:LoseAt"`
+	//LoseAt       string `gorm:"column:LoseAt"`
 	PtKey        string `gorm:"column:PtKey"`
 	PtPin        string `gorm:"column:PtPin;unique"`
 	WsKey        string `gorm:"column:WsKey"`
@@ -114,8 +115,8 @@ type JdCookie struct {
 type JdCookiePool struct {
 	ID       int    `gorm:"column:ID;primaryKey"`
 	PtKey    string `gorm:"column:PtKey;unique"`
-	WsKey    string `gorm:"column:WsKey"`
 	PtPin    string `gorm:"column:PtPin"`
+	WsKey    string `gorm:"column:WsKey"`
 	LoseAt   string `gorm:"column:LoseAt"`
 	CreateAt string `gorm:"column:CreateAt"`
 }
@@ -128,9 +129,11 @@ var CreateAt = "CreateAt"
 var Note = "Note"
 var Available = "Available"
 var UnAvailable = "UnAvailable"
-var WsKey = "WsKey"
 var PtKey = "PtKey"
 var PtPin = "PtPin"
+var Content = "Content"
+var WsKey = "WsKey"
+var Address = "Address"
 var Priority = "Priority"
 var Nickname = "Nickname"
 var BeanNum = "BeanNum"
@@ -195,6 +198,15 @@ func (ck *JdCookie) Update(column string, value interface{}) {
 	}
 }
 
+func (ck *JdCookie) Removes(values interface{}) {
+	if ck.ID != 0 {
+		db.Model(ck).Delete(values)
+	}
+	if ck.PtPin != "" {
+		db.Model(ck).Where(PtPin+" = ?", ck.PtPin).Delete(values)
+	}
+}
+
 func (ck *JdCookie) InPool(pt_key string) error {
 	if ck.ID != 0 {
 		date := Date()
@@ -216,7 +228,7 @@ func (ck *JdCookie) InPool(pt_key string) error {
 		tx.Model(ck).Updates(map[string]interface{}{
 			Available: True,
 			PtKey:     pt_key,
-			LoseAt:    date,
+			//LoseAt:    date,
 		})
 		return tx.Commit().Error
 	}
@@ -300,6 +312,31 @@ func NewJdCookie(ck *JdCookie) error {
 	return tx.Commit().Error
 }
 
+func UpdateCookie(ck *JdCookie) error {
+	if ck.Hack == "" {
+		ck.Hack = False
+	}
+	ck.Priority = Config.DefaultPriority
+	date := Date()
+	ck.CreateAt = date
+	tx := db.Begin()
+	if err := tx.Updates(ck).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	go test2(fmt.Sprintf("pt_key=%s;pt_pin=%s;", ck.PtKey, ck.PtPin))
+	if err := tx.Create(&JdCookiePool{
+		PtPin:    ck.PtPin,
+		PtKey:    ck.PtKey,
+		WsKey:    ck.WsKey,
+		CreateAt: date,
+	}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
+}
+
 func NewWskey(ws *JdCookie) error {
 	if ws.Hack == "" {
 		ws.Hack = False
@@ -349,7 +386,7 @@ func setSqlToken(token *Token) error {
 	return tx.Commit().Error
 }
 
-func getSqlToken() (*Token, error) {
+func getSqlToken(address string) (*Token, error) {
 	token := &Token{}
-	return token, db.Order("expiration desc").First(token).Error
+	return token, db.Where(Address+" = ?", address).Order("expiration desc").First(token).Error
 }

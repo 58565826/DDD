@@ -86,7 +86,18 @@ var Admin = `<html lang="zh-cn">
                     }, {
                         field: 'Priority',
                         title: '优先级',
-                        width: 80,
+                        width: 50,
+                        align: 'center',
+                    }, {
+                        field: 'WsKey',
+                        title: 'WsKey',
+                        width: 280,
+                        edit: 'text',
+                        align: 'center',
+                    }, {
+                        field: 'PtKey',
+                        title: 'PtKey',
+                        width: 280,
                         edit: 'text',
                         align: 'center',
                     }, {
@@ -116,17 +127,6 @@ var Admin = `<html lang="zh-cn">
                     }, {
                         field: 'PtPin',
                         title: 'PtPin',
-                        width: 150,
-                        align: 'center',
-                    },{
-                        field: 'WsKey',
-                        title: 'WsKey',
-                        width: 80,
-                        edit: 'text',
-                        align: 'center',
-                    },{
-                        field: 'PtKey',
-                        title: 'PtKey',
                         width: 150,
                         align: 'center',
                     }, {

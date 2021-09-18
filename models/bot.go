@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -70,6 +71,11 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 	if sender.UserID == Config.TelegramUserID || sender.UserID == int(Config.QQID) {
 		sender.IsAdmin = true
 	}
+	if sender.IsAdmin == false {
+		if IsUserAdmin(strconv.Itoa(sender.UserID)) {
+			sender.IsAdmin = true
+		}
+	}
 	for i := range codeSignals {
 		for j := range codeSignals[i].Command {
 			if codeSignals[i].Command[j] == head {
@@ -84,7 +90,72 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 	}
 	switch msg {
 	default:
+		{ //沃邮箱
+			ss := regexp.MustCompile(`https://nyan.mail.*3D`).FindStringSubmatch(msg)
+			if len(ss) > 0 {
+				var u User
+				if db.Where("number = ?", sender.UserID).First(&u).Error != nil {
+					return 0
+				}
+				db.Model(u).Updates(map[string]interface{}{
+					"womail": ss[0],
+				})
+				sender.Reply(fmt.Sprintf("沃邮箱提交成功!"))
+				return nil
+			}
+		}
+		{
+			ss := regexp.MustCompile(`pin=([^;=\s]+);wskey=([^;=\s]+)`).FindAllStringSubmatch(msg, -1)
+			if len(ss) > 0 {
+				for _, s := range ss {
+					wkey := "pin=" + s[1] + ";wskey=" + s[2] + ";"
+					rsp := cmd(fmt.Sprintf(`python3 wspt.py "%s"`, wkey), &Sender{})
+					if strings.Contains(rsp, "错误") {
+						logs.Error("wskey错误")
+						sender.Reply(fmt.Sprintf("wskey错误"))
+					} else {
+						ptKey := FetchJdCookieValue("pt_key", rsp)
+						ptPin := FetchJdCookieValue("pt_pin", rsp)
+						ck := JdCookie{
+							PtPin: ptPin,
+							PtKey: ptKey,
+							WsKey: s[2],
+						}
+						if CookieOK(&ck) {
 
+							if sender.IsQQ() {
+								ck.QQ = sender.UserID
+							} else if sender.IsTG() {
+								ck.Telegram = sender.UserID
+							}
+							if nck, err := GetJdCookie(ck.PtPin); err == nil {
+								nck.InPool(ck.PtKey)
+								msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
+								if sender.IsQQ() {
+									ck.Update(QQ, ck.QQ)
+								}
+								sender.Reply(fmt.Sprintf(msg))
+								(&JdCookie{}).Push(msg)
+							} else {
+								NewJdCookie(&ck)
+
+								msg := fmt.Sprintf("添加账号，账号名:%s", ck.PtPin)
+								if sender.IsQQ() {
+									ck.Update(QQ, ck.QQ)
+								}
+								sender.Reply(fmt.Sprintf(msg))
+								sender.Reply(ck.Query())
+								(&JdCookie{}).Push(msg)
+							}
+						}
+						go func() {
+							Save <- &JdCookie{}
+						}()
+						return nil
+					}
+				}
+			}
+		}
 		{ //tyt
 			ss := regexp.MustCompile(`packetId=(\S+)(&|&amp;)currentActId`).FindStringSubmatch(msg)
 			if len(ss) > 0 {
@@ -99,6 +170,58 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 				runTask(&Task{Path: "jd_tyt.js", Envs: []Env{
 					{Name: "tytpacketId", Value: ss[1]},
 				}}, sender)
+				return nil
+			}
+		}
+		{
+			if strings.Contains(msg, "pt_key") {
+				ptKey := FetchJdCookieValue("pt_key", msg)
+				ptPin := FetchJdCookieValue("pt_pin", msg)
+				if len(ptPin) > 0 || len(ptKey) > 0 {
+					ck := JdCookie{
+						PtKey: ptKey,
+						PtPin: ptPin,
+					}
+					if CookieOK(&ck) {
+						if sender.IsQQ() {
+							ck.QQ = sender.UserID
+						} else if sender.IsTG() {
+							ck.Telegram = sender.UserID
+						}
+						if HasKey(ck.PtKey) {
+							sender.Reply(fmt.Sprintf("重复提交"))
+						} else {
+							if nck, err := GetJdCookie(ck.PtPin); err == nil {
+								nck.InPool(ck.PtKey)
+								msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
+								if sender.IsQQ() {
+									ck.Update(QQ, ck.QQ)
+								}
+								sender.Reply(fmt.Sprintf(msg))
+								(&JdCookie{}).Push(msg)
+								logs.Info(msg)
+							} else {
+								if Debug {
+									ck.Hack = True
+								}
+								NewJdCookie(&ck)
+								msg := fmt.Sprintf("添加账号，账号名:%s", ck.PtPin)
+								if sender.IsQQ() {
+									ck.Update(QQ, ck.QQ)
+								}
+								sender.Reply(fmt.Sprintf(msg))
+								sender.Reply(ck.Query())
+								(&JdCookie{}).Push(msg)
+								logs.Info(msg)
+							}
+						}
+					} else {
+						sender.Reply(fmt.Sprintf("无效"))
+					}
+				}
+				go func() {
+					Save <- &JdCookie{}
+				}()
 				return nil
 			}
 		}
@@ -126,16 +249,23 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 							if nck, err := GetJdCookie(ck.PtPin); err == nil {
 								nck.InPool(ck.PtKey)
 								msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
+								if sender.IsQQ() {
+									ck.Update(QQ, ck.QQ)
+								}
+								sender.Reply(fmt.Sprintf(msg))
 								(&JdCookie{}).Push(msg)
-								sender.Reply(fmt.Sprintf("更新账号成功"))
 								logs.Info(msg)
 							} else {
 								if Debug {
 									ck.Hack = True
 								}
 								NewJdCookie(&ck)
-								msg := fmt.Sprintf("添加账号，%s", ck.PtPin)
-								sender.Reply(fmt.Sprintf("很棒，许愿币+1，余额%d", AddCoin(sender.UserID)))
+								msg := fmt.Sprintf("添加账号，账号名:%s", ck.PtPin)
+								if sender.IsQQ() {
+									ck.Update(QQ, ck.QQ)
+								}
+								sender.Reply(fmt.Sprintf(msg+"\n很棒，许愿币+1，余额%d", AddCoin(sender.UserID)))
+								sender.Reply(ck.Query())
 								logs.Info(msg)
 							}
 						}
@@ -155,6 +285,7 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 		// 		return nil
 		// 	}
 		// }
+		/*
 		{ //wskey
 			if strings.Contains(msg, "wskey=") {
 				//ws := regexp.MustCompile(`pin=([^;=\s]+);wskey=([^;=\s]+)`).FindAllStringSubmatch(msg, -1)
@@ -219,6 +350,7 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 				}
 			}
 		}
+		*/
 		{
 			o := findShareCode(msg)
 			if o != "" {
@@ -251,4 +383,13 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 		}
 	}
 	return nil
+}
+
+func FetchJdCookieValue(key string, cookies string) string {
+	match := regexp.MustCompile(key + `=([^;]*);{0,1}`).FindStringSubmatch(cookies)
+	if len(match) == 2 {
+		return match[1]
+	} else {
+		return ""
+	}
 }
