@@ -11,9 +11,9 @@ import (
 	"github.com/beego/beego/v2/server/web/context"
 
 	"github.com/beego/beego/v2/server/web"
-	"github.com/58563528/DDD/controllers"
-	"github.com/58563528/DDD/models"
-	"github.com/58563528/DDD/qbot"
+	"github.com/58565856/DDD/controllers"
+	"github.com/58565856/DDD/models"
+	"github.com/58565856/DDD/qbot"
 )
 
 var theme = ""
@@ -27,7 +27,7 @@ func main() {
 	})
 	web.Get("/", func(ctx *context.Context) {
 		if models.Config.Theme == "" {
-			models.Config.Theme = models.GhProxy + "https://raw.githubusercontent.com/58563528/DDD/main/theme/bidong.html"
+			models.Config.Theme = models.GhProxy + "https://raw.githubusercontent.com/58565856/DDD/main/theme/bidong.html"
 		}
 		if theme != "" {
 			ctx.WriteString(theme)

@@ -13,7 +13,7 @@ containers: #容器，可配置多个
   #  password: admin
   # - path: /ql/config/config.sh #本地配置文件路径 v1v2v3v4v5和不知名容器的配置
   #- path: /Users/cdle/Desktop/jd_study/jdc/list.sh
-theme: #https://ghproxy.com/https://raw.githubusercontent.com/58563528/DDD/main/theme/noodin.html #自定义主题，支持本地、网络路径（我喜欢吃面）
+theme: #https://ghproxy.com/https://raw.githubusercontent.com/58565856/DDD/main/theme/noodin.html #自定义主题，支持本地、网络路径（我喜欢吃面）
 static: ./static #静态文件 便于自定义二维码页面时，引入css、js等文件（不用动）
 master: jd_xxxxx #管理员账户pin，有多个用'&'拼接
 #数据库 支持sqlite3、mysql和postgres

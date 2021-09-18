@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/58563528/DDD/models"
+	"github.com/58565856/DDD/models"
 )
 
 type AccountController struct {
