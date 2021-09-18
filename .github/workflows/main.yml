@@ -32,7 +32,7 @@ jobs:
         run: |
           cd ./
           go get github.com/mitchellh/gox
-         # CGO_ENABLED=1 gox -os "windows linux" -arch "amd64 arm arm64"
+          #CGO_ENABLED=1 gox -os "windows linux" -arch "amd64 arm arm64"
           gox -os "linux" -arch "amd64 arm arm64"
           ls
       #    go build -v -o xdd_linux_amd64 /home/runner/work/xdd # 这 3 条是交叉编译 Go 的指令，酌情修改。
