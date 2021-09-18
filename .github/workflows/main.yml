@@ -50,8 +50,9 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: DDD_*
           tag: DDD-${{ steps.create_timestamp.outputs.timestamp }}
-        overwrite: true
-        file_glob: true
+          overwrite: true
+          file_glob: true
+
       #- name: Release
       #  uses: softprops/action-gh-release@v1
       #  with: # 将下述可执行文件 release 上去
