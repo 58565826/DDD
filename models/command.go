@@ -230,7 +230,6 @@ var codeSignals = []CodeSignal{
 		},
 	},
 
-
 	{
 		Command: []string{"coin", "许愿币", "余额", "yu", "yue"},
 		Handle: func(sender *Sender) interface{} {
