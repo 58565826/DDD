@@ -2,9 +2,10 @@ name: 编译DDD
 
 on:
   push:
-    branches: [ main ]
-    tags:
-    - 'v*'
+    branches: #当分支改动时触发
+      - main
+  watch:
+    types: [started]  #当star增加时触发
 
 jobs:
 
