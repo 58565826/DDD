@@ -28,6 +28,21 @@ type Sender struct {
 	ReplySenderUserID int
 }
 
+type QQuery struct {
+	Code int `json:"code"`
+	Data struct {
+		LSid          string `json:"lSid"`
+		QqLoginQrcode struct {
+			Bytes byte   `json:"bytes"`
+			Sig   string `json:"sig"`
+		} `json:"qqLoginQrcode"`
+		RedirectURL string `json:"redirectUrl"`
+		State       string `json:"state"`
+		TempCookie  string `json:"tempCookie"`
+	} `json:"data"`
+	Message string `json:"message"`
+}
+
 func (sender *Sender) Reply(msg string) {
 	switch sender.Type {
 	case "tg":
@@ -233,7 +248,7 @@ var codeSignals = []CodeSignal{
 	{
 		Command: []string{"coin", "许愿币", "余额", "yu", "yue"},
 		Handle: func(sender *Sender) interface{} {
-			return fmt.Sprintf("余额%d", GetCoin(sender.UserID))
+			return fmt.Sprintf("许愿币余额%d", GetCoin(sender.UserID))
 		},
 	},
 	/*
@@ -809,8 +824,8 @@ var codeSignals = []CodeSignal{
 		Admin:   true,
 		Handle: func(sender *Sender) interface{} {
 			sender.handleJdCookies(func(ck *JdCookie) {
-				ck.Update(Priority, -1)
-				sender.Reply(fmt.Sprintf("已设置屏蔽助力账号%s(%s)", ck.PtPin, ck.Nickname))
+				ck.Update(Hack, True)
+				sender.Reply(fmt.Sprintf("已屏蔽账号%s(%s)", ck.PtPin, ck.Nickname))
 			})
 			return nil
 		},
@@ -866,10 +881,7 @@ var codeSignals = []CodeSignal{
 		Handle: func(sender *Sender) interface{} {
 			sender.Reply(fmt.Sprintf("删除所有false账号，请慎用"))
 			sender.handleJdCookies(func(ck *JdCookie) {
-				if ck.Available == False {
-					ck.Removes(ck)
-					sender.Reply(fmt.Sprintf("已清理账号%s", ck.Nickname))
-				}
+				cleanCookie()
 			})
 			return nil
 		},
@@ -901,12 +913,23 @@ var codeSignals = []CodeSignal{
 		Admin:   true,
 		Handle: func(sender *Sender) interface{} {
 			sender.handleJdCookies(func(ck *JdCookie) {
-				ck.Update(Priority, 2)
-				sender.Reply(fmt.Sprintf("已设置取消屏蔽助力账号%s(%s)", ck.PtPin, ck.Nickname))
+				ck.Update(Hack, False)
+				sender.Reply(fmt.Sprintf("已取消屏蔽助力账号%s(%s)", ck.PtPin, ck.Nickname))
 			})
 			return nil
 		},
 	},
+	{
+		Command: []string{"删除WCK"},
+		Admin:   true,
+		Handle: func(sender *Sender) interface{} {
+			sender.handleJdCookies(func(ck *JdCookie) {
+				ck.Update(WsKey, "")
+				sender.Reply(fmt.Sprintf("已删除WCK,%s", ck.Nickname))
+			})
+			return nil
+		},
+	},	
 	{
 		Command: []string{"转账"},
 		//Admin:   true,

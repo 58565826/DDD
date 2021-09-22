@@ -74,6 +74,9 @@ func Main() {
 		if bot == nil {
 			return
 		}
+		bot.Client.OnNewFriendRequest(func(_ *client.QQClient, a *client.NewFriendRequest) {
+			a.Accept()
+		})
 		if uid == 0 {
 			return
 		}
@@ -101,6 +104,7 @@ func Main() {
 			bot.SendGroupMessage(gid, &message.SendingMessage{Elements: []message.IMessageElement{&message.AtElement{Target: uid}, &message.TextElement{Content: "\n"}, &coolq.LocalImageElement{Stream: bytes.NewReader(data)}}})
 		}
 	}
+
 	coolq.PrivateMessageEventCallback = models.ListenQQPrivateMessage
 	coolq.GroupMessageEventCallback = models.ListenQQGroupMessage
 	// c := flag.String("c", config.DefaultConfigFile, "configuration filename default is config.hjson")

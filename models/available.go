@@ -121,17 +121,38 @@ type UserInfoResult struct {
 
 func initCookie() {
 	cks := GetJdCookies()
-	l := len(cks)
-	for i := 0; i < l-1; i++ {
+	//l := len(cks)
+	for i := range cks {
 		if cks[i].Available == True && !CookieOK(&cks[i]) {
-			if pt_key, err := cks[i].OutPool(); err == nil && pt_key != "" {
-				i--
-			}
+			cks[i].OutPool()
 		}
 	}
+	//for i := 0; i < l-1; i++ {
+	//	if cks[i].Available == True && !CookieOK(&cks[i]) {
+	//		if pt_key, err := cks[i].OutPool(); err == nil && pt_key != "" {
+	//			i = i - 1
+	//			logs.Info("正常操作")
+	//			logs.Info(cks[i].PtPin)
+	//			logs.Info(i)
+	//		}
+	//	}
+	//}
 	go func() {
 		Save <- &JdCookie{}
 	}()
+}
+
+func cleanCookie() {
+	cks := GetJdCookies()
+	(&JdCookie{}).Push("开始清理过期账号")
+	xx := 0
+	for i := range cks {
+		if cks[i].Available == False {
+			xx++
+			cks[i].Removes(cks[i])
+		}
+	}
+	(&JdCookie{}).Push(fmt.Sprintf("所有CK清理，共%d个", xx))
 }
 
 func updateCookie() {
@@ -161,13 +182,14 @@ func updateCookie() {
 				if nck, err := GetJdCookie(ck.PtPin); err == nil {
 					xx++
 					nck.InPool(ck.PtKey)
-					//msg := fmt.Sprintf("定时更新账号，%s", ck.PtPin)
+					nck.Update(Available, True)
+					msg := fmt.Sprintf("定时更新账号，%s", ck.PtPin)
 					//不再发送成功提醒
-					//(&JdCookie{}).Push(msg)
+					(&JdCookie{}).Push(msg)
 					//logs.Info(msg)
 				} else {
 					yy++
-					nck.Update(Available, false)
+					ck.Update(Available, False)
 					(&JdCookie{}).Push(fmt.Sprintf("转换失败，%s", ck.PtPin))
 				}
 				go func() {
@@ -208,7 +230,8 @@ func CookieOK(ck *JdCookie) bool {
 		if ui.Msg == "not login" {
 			if ck.Available == True {
 				ck.Push(fmt.Sprintf("失效账号，%s", ck.PtPin))
-				ck.Update(Available, false)
+				ck.Update(Available, False)
+				logs.Info(ck.Available)
 				JdCookie{}.Push(fmt.Sprintf("失效账号，%s", ck.Nickname))
 				if Config.Wskey {
 					if len(ck.WsKey) > 0 {
@@ -216,21 +239,29 @@ func CookieOK(ck *JdCookie) bool {
 						//ck.Push(fmt.Sprintf(pinky))
 						msg := cmd(fmt.Sprintf(`python3 wspt.py "%s"`, pinky), &Sender{})
 						JdCookie{}.Push(fmt.Sprintf("自动转换wskey---%s", msg))
-						ptKey := FetchJdCookieValue("pt_key", msg)
-						ptPin := FetchJdCookieValue("pt_pin", msg)
-						ck := JdCookie{
-							PtKey: ptKey,
-							PtPin: ptPin,
-						}
-						if nck, err := GetJdCookie(ck.PtPin); err == nil {
-							nck.InPool(ck.PtKey)
-							msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
-							(&JdCookie{}).Push(msg)
-							logs.Info(msg)
+						//缺少错误判断
+						if strings.Contains(msg, "错误") {
+							ck.Push(fmt.Sprintf("Wskey失效账号，%s", ck.PtPin))
+							(&JdCookie{}).Push(fmt.Sprintf("Wskey失效，%s", ck.PtPin))
 						} else {
-							nck.Update(Available, false)
-							(&JdCookie{}).Push("转换失败")
+							ptKey := FetchJdCookieValue("pt_key", msg)
+							ptPin := FetchJdCookieValue("pt_pin", msg)
+							logs.Info(ptPin)
+							ck := JdCookie{
+								PtKey: ptKey,
+								PtPin: ptPin,
+							}
+							if nck, err := GetJdCookie(ptPin); err == nil {
+								nck.InPool(ck.PtKey)
+								msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
+								(&JdCookie{}).Push(msg)
+								logs.Info(msg)
+							} else {
+								//nck.Update(Available, False)
+								(&JdCookie{}).Push(fmt.Sprintf("转换失败，%s", nck.PtPin))
+							}
 						}
+
 					} else {
 						ck.Push(fmt.Sprintf("失效账号，%s", ck.PtPin))
 						JdCookie{}.Push(fmt.Sprintf("失效账号，%s", ck.Nickname))

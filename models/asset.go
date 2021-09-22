@@ -72,7 +72,7 @@ func (ck *JdCookie) Query1() string {
 	//log.Info(msg)
 	if !strings.Contains(msg, "cookies") {
 		msg = regexp.MustCompile(`^(.+\s+){3}|\s*.+\s*$|.*东东工厂.*\s*`).ReplaceAllString(msg, "")
-		msg=fmt.Sprintf("账号昵称：%s\n绑定QQ: %v\n优先级: %v\n用户等级：%v\n等级名称：%v\n更新时间: %s\n%s",ck.Nickname,ck.QQ,ck.Priority,ck.UserLevel,ck.LevelName,ck.CreateAt,msg)
+		msg = fmt.Sprintf("账号昵称：%s\n绑定QQ: %v\n用户等级：%v\n等级名称：%v\n优先级: %v\n更新时间: %s\n%s%s", ck.Nickname, ck.QQ, ck.UserLevel, ck.LevelName, ck.Priority, ck.CreateAt,msg)
 	} else if CookieOK(ck) {
 		msg = fmt.Sprintf("查询失败\n账号: %s\n备注: %s\n%s", ck.PtPin, ck.Note, msg)
 	} else {
