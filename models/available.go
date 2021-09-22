@@ -168,7 +168,10 @@ func updateCookie() {
 			ck := cks[i]
 			//JdCookie{}.Push(fmt.Sprintf("更新账号账号，%s", ck.Nickname))
 			var pinky = fmt.Sprintf("pin=%s;wskey=%s;", ck.PtPin, ck.WsKey)
-			rsp := cmd(fmt.Sprintf(`python3 wspt.py "%s"`, pinky), &Sender{})
+			rsp, err := getKey(pinky)
+			if err != nil {
+				logs.Error(err)
+			}
 			if strings.Contains(rsp, "错误") {
 				ck.Push(fmt.Sprintf("Wskey失效账号，%s", ck.PtPin))
 				(&JdCookie{}).Push(fmt.Sprintf("Wskey失效，%s", ck.PtPin))
@@ -179,18 +182,20 @@ func updateCookie() {
 					PtKey: ptKey,
 					PtPin: ptPin,
 				}
-				if nck, err := GetJdCookie(ck.PtPin); err == nil {
-					xx++
-					nck.InPool(ck.PtKey)
-					nck.Update(Available, True)
-					msg := fmt.Sprintf("定时更新账号，%s", ck.PtPin)
-					//不再发送成功提醒
-					(&JdCookie{}).Push(msg)
-					//logs.Info(msg)
-				} else {
-					yy++
-					ck.Update(Available, False)
-					(&JdCookie{}).Push(fmt.Sprintf("转换失败，%s", ck.PtPin))
+				if ptPin != "" || ptKey != "" {
+					if nck, err := GetJdCookie(ck.PtPin); err == nil {
+						xx++
+						nck.InPool(ck.PtKey)
+						nck.Update(Available, True)
+						msg := fmt.Sprintf("定时更新账号，%s", ck.PtPin)
+						////不再发送成功提醒
+						(&JdCookie{}).Push(msg)
+						//logs.Info(msg)
+					} else {
+						yy++
+						ck.Update(Available, False)
+						(&JdCookie{}).Push(fmt.Sprintf("查无匹配得ptpin，%s", ck.PtPin))
+					}
 				}
 				go func() {
 					Save <- &JdCookie{}
@@ -236,8 +241,10 @@ func CookieOK(ck *JdCookie) bool {
 				if Config.Wskey {
 					if len(ck.WsKey) > 0 {
 						var pinky = fmt.Sprintf("pin=%s;wskey=%s;", ck.PtPin, ck.WsKey)
-						//ck.Push(fmt.Sprintf(pinky))
-						msg := cmd(fmt.Sprintf(`python3 wspt.py "%s"`, pinky), &Sender{})
+						msg, err := getKey(pinky)
+						if err != nil {
+							logs.Error(err)
+						}
 						JdCookie{}.Push(fmt.Sprintf("自动转换wskey---%s", msg))
 						//缺少错误判断
 						if strings.Contains(msg, "错误") {

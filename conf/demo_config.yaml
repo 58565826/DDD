@@ -19,28 +19,28 @@ IsOldV4: false #填写true或者false  false是否新版或者旧版V4
 ApiToken: #为空默认随机禁用
 Wskey: true # 填空默认禁用wskey转换 需要的填true
 
-theme:  #https://ghproxy.com/https://raw.githubusercontent.com/58563528/DDD/main/theme/noodin.html #自定义主题，支持本地、网络路径（我喜欢吃面）
+theme:  #https://ghproxy.com/https://raw.githubusercontent.com/58563528/DDD/main/theme/noodin.html #自定义主题，支持本地、网络路径
 static: ./static #静态文件 便于自定义二维码页面时，引入css、js等文件（不用动）
 master: jd_xxxxx #管理员账户pin，有多个用'&'拼接
 #数据库 支持sqlite3、mysql和postgres
 #sqlite3 填路径，默认 ./.dmm
 #mysql填 user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
 #postgres填 host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai
-database: /ql/db/.xdd.db  #数据库位置，默认./.xdd.db #（强迫症的我还是给它找了个家，路径按自己的来改）
+database: /ql/db/.xdd.db  #数据库位置，默认./.xdd.db #
 qywx_key:  #企业微信推送key（这个就是企业微信机器人的key）
 daily_push:  #定时任务（这个我暂时没有配置）
-resident: #均衡模式下所有容器共同的账号pin，有多个用'&'拼接。不建议填写，后续实现指定账号助力功能。（这个我也没配置，多容器自己试试）
+resident: #均衡模式下所有容器共同的账号pin，有多个用'&'拼接。不建议填写，后续实现指定账号助力功能
 #自定义ua
 user_agent:
-telegram_bot_token:  #telegram bot token（这个应该不用再说了吧）
-telegram_user_id:  #telegrame user id（这个应该不用再说了吧）
-qquid:  #接收通知的qq号（这个填你的群主qq号码，和扫码配置的qq机器人分开，需要2个qq号）
+telegram_bot_token:  #telegram bot token
+telegram_user_id:  #telegrame user id
+TGURL: #填写TG代理地址参考https://www.kejiwanjia.com/server/5221.html#3worker
+qquid:  #接收通知的qq号
 qqgid:  #监听的群
-qbot_public_mode: true
-default_priority: #新用户默认优先级（默认就行，默认是1）
+qbot_public_mode: true #qq机器人群聊模式，默认私聊模式（默认false）
+default_priority: #新用户默认优先级（默认是1）
 no_ghproxy: true #更新资源是否不使用代理 默认false
-qbot_public_mode: true  #qq机器人群聊模式，默认私聊模式（默认false）
-daily_asset_push_cron: 0 9 * * * #日常资产推送时间
 
+daily_asset_push_cron: 0 9 * * * #日常资产推送时间
 repos:
   - git: https://github.com/shufflewzc/faker2.git
