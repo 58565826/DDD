@@ -272,7 +272,7 @@ func (ck *JdCookie) OutPool() (string, error) {
 		if tx.Where(fmt.Sprintf("%s = '%s' and %s = '%s'", PtPin, ck.PtPin, LoseAt, "")).First(jp).Error != nil {
 			us[Available] = False
 			us[PtKey] = ""
-			logs.Info("¿ªÊ¼½ûÓÃ")
+			logs.Info("å¼€å§‹ç¦ç”¨")
 		} else {
 			us[Available] = True
 			us[PtKey] = jp.PtKey
