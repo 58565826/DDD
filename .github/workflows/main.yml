@@ -47,10 +47,12 @@ jobs:
           export BINARY_NAME="$BINARY_PREFIX$GOOS_$GOARCH$BINARY_SUFFIX"
           export CGO_ENABLED=0
           go build -o "output/$BINARY_NAME" -trimpath -ldflags "$LD_FLAGS" .
-        
+
       - name: 上传Releases
-        uses: actions/upload-artifact@v2
-        if: ${{ !github.head_ref }}
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: ${{ matrix.goos }}_${{ matrix.goarch }}
-          path: output/
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: /home/runner/work/xdd/xdd_*
+          tag: ${{ matrix.goos }}_${{ matrix.goarch }}
+          overwrite: true
+          file_glob: true
