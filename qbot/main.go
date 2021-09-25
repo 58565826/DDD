@@ -74,9 +74,9 @@ func Main() {
 		if bot == nil {
 			return
 		}
-		bot.Client.OnNewFriendRequest(func(_ *client.QQClient, a *client.NewFriendRequest) {
-			a.Accept()
-		})
+		//bot.Client.OnNewFriendRequest(func(_ *client.QQClient, a *client.NewFriendRequest) {
+		//	a.Accept()
+		//})
 		if uid == 0 {
 			return
 		}

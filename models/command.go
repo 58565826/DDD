@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/core/logs"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"math/rand"
@@ -108,52 +109,178 @@ func (sender *Sender) handleJdCookies(handle func(ck *JdCookie)) error {
 	return nil
 }
 
-/*
-func (sender *Sender) handLeUpdateCookie() error {
-	cks := GetJdCookies()
-	a := sender.JoinContens()
-	if !sender.IsAdmin {
-		sender.Reply("你没有权限操作")
-	}else if a == "" {
-		sender. Reply("参数错误")
-	} else {
-		cks = LimitJdCookie(cks, a)
-		if len(cks)==0 {
-			sender.Reply("没有匹配的账号")
-			return errors.New("没有匹配的账号")
-		} else {
-			for i := range cks {
-				eachCk := cks[i]
-				if eachCk.WsKey == "" {
-					sender.Reply(fmt.Sprintf("更新失败,账号:%s,未提交 wskey", eachCk.PtPin))
-				} else {
-					res := cmd(fmt.Sprintf(`python wspt.py "pin=%s;wskey=%s;"`, eachCk.PtPin, eachCk.WsKey), sender)
-					ss := regexp.MustCompile(`pt_key=([^;=\s]+);.*?pt_pin=([^;=\s]+)`).FindStringSubmatch(res)
-					if ss != nil {
-						tmpCk := JdCookie{PtKey: ss[0], PtPin: eachCk.PtPin}
-						if CookieOK(&tmpCk){
-							newCK, _ := GetJdCookies(eachCk.PtPin)
-							newCK.InPool(tmpCk.PtKey)
-							sender.Reply(fmt.Sprintf(`"更新账号,%s,%s"`, eachCk.PtPin, tmpCk.PtKey))
-						} else {
-							sender.Reply(fmt.Sprintf(`"更新失败,账号:%s,获取到的ck无效"`, eachCk.PtPin))
-							}
-					} else {
-						sender.Reply(fmt.Sprintf(`"更新失败,账号:%5,未获取到 pt_key,执行结果为:%s"`, eachCk.PtPin,res))
-					}
-				}
-			}
-		}
-	}
-	return nil
-}
-*/
 var codeSignals = []CodeSignal{
 	{
 		Command: []string{"status", "状态"},
 		Admin:   true,
 		Handle: func(sender *Sender) interface{} {
 			return Count()
+		},
+	},
+	{
+		Command: []string{"删除WCK"},
+		Admin:   true,
+		Handle: func(sender *Sender) interface{} {
+			sender.handleJdCookies(func(ck *JdCookie) {
+				ck.Update(WsKey, "")
+				sender.Reply(fmt.Sprintf("已删除WCK,%s", ck.Nickname))
+			})
+			return nil
+		},
+	},
+	//{
+	//	Command: []string{"qrcode", "扫码", "二维码", "scan"},
+	//	Handle: func(sender *Sender) interface{} {
+	//		rsp, err := httplib.Get("https://api.kukuqaq.com/jd/qrcode").Response()
+	//		if err != nil {
+	//			return nil
+	//		}
+	//		body, err1 := ioutil.ReadAll(rsp.Body)
+	//		if err1 == nil {
+	//			fmt.Println(string(body))
+	//		}
+	//		s := &QQuery{}
+	//		if len(body) > 0 {
+	//			json.Unmarshal(body, &s)
+	//		}
+	//		jsonByte, _ := json.Marshal(s)
+	//		jsonStr := string(jsonByte)
+	//		fmt.Printf("%v", jsonStr)
+	//		return `{"url":"` + "http://www.baidu.com" + `","img":"` + s.Data.QqLoginQrcode.Bytes + `"}`
+	//	},
+	//},
+	{
+		Command: []string{`raw ^(\d{11})$`},
+		Handle: func(s *Sender) interface{} {
+			if num := 5; len(codes) >= num {
+				return fmt.Sprintf("%v坑位全部在使用中，请排队。", num)
+			}
+			id := "qq" + strconv.Itoa(s.UserID)
+			if _, ok := codes[id]; ok {
+				return "你已在登录中。"
+			}
+			go func() {
+				c := make(chan string, 1)
+				codes[id] = c
+				defer delete(codes, id)
+				var sess = new(Session)
+				phone := s.Contents[0]
+				logs.Info(phone)
+				s.Reply("请稍后，正在模拟环境...")
+				if err := sess.Phone(phone); err != nil {
+					s.Reply(err.Error())
+					return
+				}
+				send := false
+				login := false
+				verify := false
+				success := false
+				sms_code := ""
+				for {
+					query, _ := sess.query()
+					if query.PageStatus == "SESSION_EXPIRED" {
+						s.Reply("登录超时")
+						return
+					}
+					if query.SessionTimeOut == 0 {
+						if success {
+							return
+						}
+						s.Reply("登录超时")
+						return
+					}
+					if query.CanClickLogin && !login {
+						s.Reply("正在登录...")
+						if err := sess.login(phone, sms_code); err != nil {
+							s.Reply(err.Error())
+							return
+						}
+					}
+					if query.PageStatus == "VERIFY_FAILED_MAX" {
+						s.Reply("验证码错误次数过多，请重新获取。")
+						return
+					}
+					if query.PageStatus == "VERIFY_CODE_MAX" {
+						s.Reply("对不起，短信验证码请求频繁，请稍后再试。")
+						return
+					}
+					if query.PageStatus == "REQUIRE_VERIFY" && !verify {
+						verify = true
+						s.Reply("正在自动验证...")
+						if err := sess.crackCaptcha(); err != nil {
+							s.Reply(err.Error())
+							return
+						}
+						s.Reply("验证通过。")
+						s.Reply("请输入验证码______")
+						select {
+						case sms_code = <-c:
+							s.Reply("正在提交验证码...")
+							if err := sess.SmsCode(sms_code); err != nil {
+								s.Reply(err.Error())
+								return
+							}
+							s.Reply("验证码提交成功。")
+						case <-time.After(60 * time.Second):
+							s.Reply("验证码超时。")
+							return
+
+						}
+					}
+					if query.CanSendAuth && !send {
+						if err := sess.sendAuthCode(); err != nil {
+							s.Reply(err.Error())
+							return
+						}
+						send = true
+					}
+					if !query.CanSendAuth && query.AuthCodeCountDown > 0 {
+
+					}
+					if query.AuthCodeCountDown == -1 && send {
+
+					}
+					if query.PageStatus == "SUCCESS_CK" && !success {
+						//Sender <- &Faker{
+						//	Message: fmt.Sprintf("pt_key=%v;pt_pin=%v;", query.Ck.PtKey, query.Ck.PtPin),
+						//	UserID:  s.GetUserID(),
+						//	Type:    s.GetImType(),
+						//}
+						s.Reply(fmt.Sprintf("登录成功，%v秒后可以登录下一个账号。", query.SessionTimeOut))
+						success = true
+					}
+					time.Sleep(time.Second)
+				}
+			}()
+
+			return nil
+		},
+	},
+	{
+		Command: []string{"登录"},
+		Handle: func(s *Sender) interface{} {
+			logs.Info("进入流程")
+			if num := 5; len(codes) >= num {
+				return fmt.Sprintf("%v坑位全部在使用中，请排队(稍后再试)。", num)
+			}
+			id := "qq" + strconv.Itoa(s.UserID)
+			if _, ok := codes[id]; ok {
+				return "你已在登录中。"
+			}
+			s.Reply("请输入手机号___________")
+			return nil
+		},
+	},
+	{
+		Command: []string{`raw ^(\d{6})$`},
+		Handle: func(s *Sender) interface{} {
+			if code, ok := codes["qq"+fmt.Sprint(s.UserID)]; ok {
+				//code <- s.Get()
+				logs.Info(code)
+			} else {
+				s.Reply("验证码不存在或过期了，请重新登录。")
+			}
+			return nil
 		},
 	},
 	{
@@ -837,7 +964,11 @@ var codeSignals = []CodeSignal{
 			sender.handleJdCookies(func(ck *JdCookie) {
 				if len(ck.WsKey) > 0 {
 					var pinky = fmt.Sprintf("pin=%s;wskey=%s;", ck.PtPin, ck.WsKey)
-					rsp := cmd(fmt.Sprintf(`python3 wspt.py "%s"`, pinky), &Sender{})
+				//rsp := cmd(fmt.Sprintf(`python3 wspt.py "%s"`, pinky), &Sender{})
+					rsp, err := getKey(pinky)
+					if err != nil {
+						logs.Error(err)
+					}
 					if len(rsp) > 0 {
 						ptKey := FetchJdCookieValue("pt_key", rsp)
 						ptPin := FetchJdCookieValue("pt_pin", rsp)
@@ -1063,3 +1194,43 @@ func ReturnCoin(sender *Sender) {
 	}
 	tx.Commit()
 }
+/*
+func (sender *Sender) handLeUpdateCookie() error {
+	cks := GetJdCookies()
+	a := sender.JoinContens()
+	if !sender.IsAdmin {
+		sender.Reply("你没有权限操作")
+	}else if a == "" {
+		sender. Reply("参数错误")
+	} else {
+		cks = LimitJdCookie(cks, a)
+		if len(cks)==0 {
+			sender.Reply("没有匹配的账号")
+			return errors.New("没有匹配的账号")
+		} else {
+			for i := range cks {
+				eachCk := cks[i]
+				if eachCk.WsKey == "" {
+					sender.Reply(fmt.Sprintf("更新失败,账号:%s,未提交 wskey", eachCk.PtPin))
+				} else {
+					res := cmd(fmt.Sprintf(`python wspt.py "pin=%s;wskey=%s;"`, eachCk.PtPin, eachCk.WsKey), sender)
+					ss := regexp.MustCompile(`pt_key=([^;=\s]+);.*?pt_pin=([^;=\s]+)`).FindStringSubmatch(res)
+					if ss != nil {
+						tmpCk := JdCookie{PtKey: ss[0], PtPin: eachCk.PtPin}
+						if CookieOK(&tmpCk){
+							newCK, _ := GetJdCookies(eachCk.PtPin)
+							newCK.InPool(tmpCk.PtKey)
+							sender.Reply(fmt.Sprintf(`"更新账号,%s,%s"`, eachCk.PtPin, tmpCk.PtKey))
+						} else {
+							sender.Reply(fmt.Sprintf(`"更新失败,账号:%s,获取到的ck无效"`, eachCk.PtPin))
+							}
+					} else {
+						sender.Reply(fmt.Sprintf(`"更新失败,账号:%5,未获取到 pt_key,执行结果为:%s"`, eachCk.PtPin,res))
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+*/
