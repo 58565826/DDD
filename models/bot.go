@@ -140,7 +140,7 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 							if nck, err := GetJdCookie(ck.PtPin); err == nil {
 								nck.InPool(ck.PtKey)
 							//	msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
-								//	nck.Update(PtKey, ck.PtKey)
+								nck.Update(PtKey, ck.PtKey)
 
 								if nck.WsKey == "" || len(nck.WsKey) == 0 {
 									if sender.IsQQ() {
