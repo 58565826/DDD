@@ -318,12 +318,6 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 			}
 		}
 
-		// { //转化
-		// 	if strings.Contains(msg, "wskey=") {
-		// 		cmd(fmt.Sprintf(`wskey="%s" python3 wspt.py`, msg), sender)
-		// 		return nil
-		// 	}
-		// }
 		/*
 		{ //wskey
 			if strings.Contains(msg, "wskey=") {
