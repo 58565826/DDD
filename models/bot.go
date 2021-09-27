@@ -139,8 +139,8 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 							}
 							if nck, err := GetJdCookie(ck.PtPin); err == nil {
 								nck.InPool(ck.PtKey)
-							//	msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
-								nck.Update(PtKey, ck.PtKey)
+								//msg := fmt.Sprintf("更新账号，%s", ck.PtPin)
+								//nck.Update(PtKey, ck.PtKey)
 
 								if nck.WsKey == "" || len(nck.WsKey) == 0 {
 									if sender.IsQQ() {
@@ -309,12 +309,15 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 							sender.Reply(fmt.Sprintf("无效，许愿币-1，余额%d", RemCoin(sender.UserID, 1)))
 						}
 					}
+
+				}
 				go func() {
 					Save <- &JdCookie{}
 				}()
 				return nil
 			}
 		}
+
 		// { //转化
 		// 	if strings.Contains(msg, "wskey=") {
 		// 		cmd(fmt.Sprintf(`wskey="%s" python3 wspt.py`, msg), sender)
