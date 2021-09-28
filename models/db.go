@@ -45,6 +45,7 @@ func initDB() {
 		&Wish{},
 		&Token{},
 		&UserAdmin{},
+		&Limit{},
 	)
 	keys = make(map[string]bool)
 	pins = make(map[string]bool)
@@ -274,7 +275,7 @@ func (ck *JdCookie) OutPool() (string, error) {
 			us[PtKey] = ""
 			logs.Info("开始禁用")
 		} else {
-			us[Available] = False
+			us[Available] = True
 			us[PtKey] = jp.PtKey
 		}
 		e := tx.Model(ck).Updates(us).RowsAffected
