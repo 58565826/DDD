@@ -16,12 +16,10 @@ containers: #容器，可配置多个
 AtTime: 6 #填写1-12之间的数  填错自负默认为10  10点容易出现高峰超时。
 IsHelp: true #填写true或者false  false
 IsOldV4: false #填写true或者false  false是否新版或者旧版V4
-ApiToken: #为空默认随机禁用
 Wskey: true # 填空默认禁用wskey转换 需要的填true
 IsAddFriend: #填写true或者false  false
 Lim: #填写1-N 代表限制次数
 tytnum: #填写1-N 代表推一推需要的互助值，默认为8
-SMSAddress:
 
 theme:  #https://ghproxy.com/https://raw.githubusercontent.com/58563528/DDD/main/theme/noodin.html #自定义主题，支持本地、网络路径
 static: ./static #静态文件 便于自定义二维码页面时，引入css、js等文件（不用动）
