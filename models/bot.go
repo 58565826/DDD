@@ -194,15 +194,14 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 			ss := regexp.MustCompile(`packetId=(\S+)(&|&amp;)currentActId`).FindStringSubmatch(msg)
 			if len(ss) > 0 {
 				if !sender.IsAdmin {
-					if Config.tytnum == 0 {
-						Config.tytnum = 8
-					}
 					coin := GetCoin(sender.UserID)
-					if coin < Config.tytnum {
-						return fmt.Sprintf("推一推需要%d个许愿币",Config.tytnum)
+					if coin < Config.Tyt {
+						return fmt.Sprintf("推一推需要%d个许愿币",Config.Tyt)
 					}
 					RemCoin(sender.UserID, 8)
-					sender.Reply(fmt.Sprintf("推一推即将开始，已扣除%d个许愿币",Config.tytnum))
+					sender.Reply(fmt.Sprintf("推一推即将开始，已扣除%d个许愿币",Config.Tyt))
+				} else {
+					sender.Reply(fmt.Sprintf("推一推即将开始，已扣除%d个许愿币，管理员通道", Config.Tyt))
 				}
 				runTask(&Task{Path: "jd_tyt.js", Envs: []Env{
 					{Name: "tytpacketId", Value: ss[1]},
@@ -214,7 +213,7 @@ var handleMessage = func(msgs ...interface{}) interface{} {
 			if strings.Contains(msg, "pt_key") {
 				ptKey := FetchJdCookieValue("pt_key", msg)
 				ptPin := FetchJdCookieValue("pt_pin", msg)
-				if len(ptPin) > 0 || len(ptKey) > 0 {
+				if len(ptPin) > 0 && len(ptKey) > 0 {
 					ck := JdCookie{
 						PtKey: ptKey,
 						PtPin: ptPin,

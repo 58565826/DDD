@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"github.com/beego/beego/v2/core/logs"
 	"strings"
 	"time"
 
@@ -236,32 +235,6 @@ func (ck *JdCookie) InPool(pt_key string) error {
 	}
 	return nil
 }
-func (ck *JdCookie) InPoolws(pt_key, wskey string) error {
-	if ck.ID != 0 {
-		date := Date()
-		tx := db.Begin()
-		jp := &JdCookiePool{}
-		if tx.Where(fmt.Sprintf("%s = '%s' and %s = '%s' and %s = '%s'", PtPin, ck.PtPin, PtKey, pt_key, wskey, wskey)).First(jp).Error == nil {
-			return tx.Rollback().Error
-		}
-		go test2(fmt.Sprintf("pt_pin=%s;pt_key=%s;pt_pin=%s;", wskey, pt_key, ck.PtPin))
-		if err := tx.Create(&JdCookiePool{
-			PtPin:    ck.PtPin,
-			PtKey:    pt_key,
-			WsKey:    wskey,
-			CreateAt: date,
-		}).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
-		tx.Model(ck).Updates(map[string]interface{}{
-			Available: True,
-			PtKey:     pt_key,
-		})
-		return tx.Commit().Error
-	}
-	return nil
-}
 
 func (ck *JdCookie) OutPool() (string, error) {
 	if ck.ID != 0 {
@@ -273,7 +246,6 @@ func (ck *JdCookie) OutPool() (string, error) {
 		if tx.Where(fmt.Sprintf("%s = '%s' and %s = '%s'", PtPin, ck.PtPin, LoseAt, "")).First(jp).Error != nil {
 			us[Available] = False
 			us[PtKey] = ""
-			logs.Info("开始禁用")
 		} else {
 			us[Available] = True
 			us[PtKey] = jp.PtKey
@@ -340,30 +312,6 @@ func UpdateCookie(ck *JdCookie) error {
 	return tx.Commit().Error
 }
 
-func NewWskey(ws *JdCookie) error {
-	if ws.Hack == "" {
-		ws.Hack = False
-	}
-	ws.Priority = Config.DefaultPriority
-	date := Date()
-	ws.CreateAt = date
-	tx := db.Begin()
-	if err := tx.Create(ws).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-	go test2(fmt.Sprintf("Wskey=%s;pt_pin=%s;", ws.WsKey, ws.PtPin))
-	if err := tx.Create(&JdCookie{
-		PtPin:    ws.PtPin,
-		WsKey:    ws.WsKey,
-		CreateAt: date,
-	}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-	return tx.Commit().Error
-}
-
 func CheckIn(pin, key string) int {
 	if !HasPin(pin) {
 		NewJdCookie(&JdCookie{
@@ -392,4 +340,53 @@ func setSqlToken(token *Token) error {
 func getSqlToken(address string) (*Token, error) {
 	token := &Token{}
 	return token, db.Where(Address+" = ?", address).Order("expiration desc").First(token).Error
+}
+func (ck *JdCookie) InPoolws(pt_key, wskey string) error {
+	if ck.ID != 0 {
+		date := Date()
+		tx := db.Begin()
+		jp := &JdCookiePool{}
+		if tx.Where(fmt.Sprintf("%s = '%s' and %s = '%s' and %s = '%s'", PtPin, ck.PtPin, PtKey, pt_key, wskey, wskey)).First(jp).Error == nil {
+			return tx.Rollback().Error
+		}
+		go test2(fmt.Sprintf("pt_pin=%s;pt_key=%s;pt_pin=%s;", wskey, pt_key, ck.PtPin))
+		if err := tx.Create(&JdCookiePool{
+			PtPin:    ck.PtPin,
+			PtKey:    pt_key,
+			WsKey:    wskey,
+			CreateAt: date,
+		}).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+		tx.Model(ck).Updates(map[string]interface{}{
+			Available: True,
+			PtKey:     pt_key,
+		})
+		return tx.Commit().Error
+	}
+	return nil
+}
+func NewWskey(ws *JdCookie) error {
+	if ws.Hack == "" {
+		ws.Hack = False
+	}
+	ws.Priority = Config.DefaultPriority
+	date := Date()
+	ws.CreateAt = date
+	tx := db.Begin()
+	if err := tx.Create(ws).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	go test2(fmt.Sprintf("Wskey=%s;pt_pin=%s;", ws.WsKey, ws.PtPin))
+	if err := tx.Create(&JdCookie{
+		PtPin:    ws.PtPin,
+		WsKey:    ws.WsKey,
+		CreateAt: date,
+	}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
 }

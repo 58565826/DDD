@@ -1,9 +1,13 @@
 package models
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/beego/beego/v2/client/httplib"
 	"github.com/beego/beego/v2/core/logs"
+	"io/ioutil"
 	"regexp"
 	"strings"
 	"time"
@@ -33,7 +37,7 @@ type QQuery struct {
 	Data struct {
 		LSid          string `json:"lSid"`
 		QqLoginQrcode struct {
-			Bytes byte   `json:"bytes"`
+			Bytes string `json:"bytes"`
 			Sig   string `json:"sig"`
 		} `json:"qqLoginQrcode"`
 		RedirectURL string `json:"redirectUrl"`
@@ -135,27 +139,31 @@ var codeSignals = []CodeSignal{
 			return nil
 		},
 	},
-	//{
-	//	Command: []string{"qrcode", "扫码", "二维码", "scan"},
-	//	Handle: func(sender *Sender) interface{} {
-	//		rsp, err := httplib.Get("https://api.kukuqaq.com/jd/qrcode").Response()
-	//		if err != nil {
-	//			return nil
-	//		}
-	//		body, err1 := ioutil.ReadAll(rsp.Body)
-	//		if err1 == nil {
-	//			fmt.Println(string(body))
-	//		}
-	//		s := &QQuery{}
-	//		if len(body) > 0 {
-	//			json.Unmarshal(body, &s)
-	//		}
-	//		jsonByte, _ := json.Marshal(s)
-	//		jsonStr := string(jsonByte)
-	//		fmt.Printf("%v", jsonStr)
-	//		return `{"url":"` + "http://www.baidu.com" + `","img":"` + s.Data.QqLoginQrcode.Bytes + `"}`
-	//	},
-	//},
+	{
+		Command: []string{"qrcode", "扫码", "二维码", "scan"},
+		Handle: func(sender *Sender) interface{} {
+			rsp, err := httplib.Post("https://api.kukuqaq.com/jd/qrcode").Response()
+			if err != nil {
+				return nil
+			}
+			body, err1 := ioutil.ReadAll(rsp.Body)
+			if err1 == nil {
+				fmt.Println(string(body))
+			}
+			s := &QQuery{}
+			if len(body) > 0 {
+				json.Unmarshal(body, &s)
+			}
+			logs.Info(s.Data.QqLoginQrcode.Bytes)
+			ddd, _ := base64.StdEncoding.DecodeString(s.Data.QqLoginQrcode.Bytes) //成图片文件并把文件写入到buffer
+			err2 := ioutil.WriteFile("./output.jpg", ddd, 0666)                   //buffer输出到jpg文件中（不做处理，直接写到文件）
+			if err2 != nil {
+				logs.Error(err2)
+			}
+			//ddd, _ := base64.StdEncoding.DecodeString("data:image/png;base64,"+s.Data.QqLoginQrcode.Bytes)
+			return "data:image/png;base64," + s.Data.QqLoginQrcode.Bytes
+		},
+	},
 	{
 		Command: []string{"sign", "打卡", "签到"},
 		Handle: func(sender *Sender) interface{} {
@@ -228,7 +236,7 @@ var codeSignals = []CodeSignal{
 		},
 	},
 	{
-		Command: []string{"更新优先级"},
+		Command: []string{"更新优先级", "更新车位"},
 		Handle: func(sender *Sender) interface{} {
 			coin := GetCoin(sender.UserID)
 			t := time.Now()
@@ -239,7 +247,7 @@ var codeSignals = []CodeSignal{
 				sender.Reply("优先级已更新")
 				ClearCoin(sender.UserID)
 			} else {
-				sender.Reply("你错过时间了呆瓜")
+				sender.Reply("你错过时间了呆瓜,下周一10点前再来吧.")
 			}
 			return nil
 		},
@@ -406,6 +414,37 @@ var codeSignals = []CodeSignal{
 		},
 	},
 	{
+		Command: []string{"设置管理员"},
+		Admin:   true,
+		Handle: func(sender *Sender) interface{} {
+			ctt := sender.JoinContens()
+			db.Create(&UserAdmin{Content: ctt})
+			return "已设置管理员"
+		},
+	},
+	{
+		Command: []string{"取消管理员"},
+		Admin:   true,
+		Handle: func(sender *Sender) interface{} {
+			ctt := sender.JoinContens()
+			RemoveUserAdmin(ctt)
+			return "已取消管理员"
+		},
+	},
+	{
+		Command: []string{"QQ转账"},
+		Admin:   true,
+		Handle: func(sender *Sender) interface{} {
+			qq := Int(sender.Contents[0])
+			if len(sender.Contents) > 1 {
+				sender.Contents = sender.Contents[1:]
+				AdddCoin(qq, Int(sender.Contents[1]))
+				sender.Reply(fmt.Sprintf("你获得%d枚互助值。", Int(sender.Contents[1])))
+			}
+			return nil
+		},
+	},
+	{
 		Command: []string{"我要钱", "给点钱", "我干", "给我钱", "给我", "我要"},
 		Handle: func(sender *Sender) interface{} {
 			cost := Int(sender.JoinContens())
@@ -467,24 +506,6 @@ var codeSignals = []CodeSignal{
 			}
 			db.Model(u).Update("coin", gorm.Expr(fmt.Sprintf("coin + %d", cost)))
 			return nil
-		},
-	},
-	{
-		Command: []string{"设置管理员"},
-		Admin:   true,
-		Handle: func(sender *Sender) interface{} {
-			ctt := sender.JoinContens()
-			db.Create(&UserAdmin{Content: ctt})
-			return "已设置管理员"
-		},
-	},
-	{
-		Command: []string{"取消管理员"},
-		Admin:   true,
-		Handle: func(sender *Sender) interface{} {
-			ctt := sender.JoinContens()
-			RemoveUserAdmin(ctt)
-			return "已取消管理员"
 		},
 	},
 	//{
@@ -896,6 +917,7 @@ var codeSignals = []CodeSignal{
 		Handle: func(sender *Sender) interface{} {
 			sender.handleJdCookies(func(ck *JdCookie) {
 				ck.Removes(ck)
+				ck.OutPool()
 				sender.Reply(fmt.Sprintf("已删除账号%s", ck.Nickname))
 			})
 			return nil
@@ -1026,6 +1048,16 @@ var codeSignals = []CodeSignal{
 		Handle: func(sender *Sender) interface{} {
 			sender.handleJdCookies(func(ck *JdCookie) {
 				sender.Reply(fmt.Sprintf("pt_key=%s;pt_pin=%s;", ck.PtKey, ck.PtPin))
+			})
+			return nil
+		},
+	},
+	{
+		Command: []string{"导出wsk"},
+		Admin:   true,
+		Handle: func(sender *Sender) interface{} {
+			sender.handleJdCookies(func(ck *JdCookie) {
+				sender.Reply(fmt.Sprintf("pin=%s;wskey=%s;", ck.PtPin, ck.WsKey))
 			})
 			return nil
 		},
