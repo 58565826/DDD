@@ -17,7 +17,7 @@ AtTime: 6 #填写1-12之间的数  填错自负默认为10  10点容易出现高
 IsHelp: true #填写true或者false  false
 IsOldV4: false #填写true或者false  false是否新版或者旧版V4
 Wskey: true # 填空默认禁用wskey转换 需要的填true
-IsAddFriend: #填写true或者false  false
+IsAddFriend: #是否自动添加好友,填写true或者false,默认false
 Lim: #填写1-N 代表限制次数
 Tyt: #填写1-N 代表推一推需要的互助值，默认为8
 
@@ -34,11 +34,11 @@ daily_push:  #定时任务（这个我暂时没有配置）
 resident: #均衡模式下所有容器共同的账号pin，有多个用'&'拼接。不建议填写，后续实现指定账号助力功能
 #自定义ua
 user_agent:
-telegram_bot_token:  #telegram bot token
-telegram_user_id:  #telegrame user id
+telegram_bot_token: #telegram bot token
+telegram_user_id: #telegrame user id
 TGURL: #填写TG代理地址参考https://www.kejiwanjia.com/server/5221.html#3worker
-qquid:  #接收通知的qq号
-qqgid:  #监听的群
+qquid: #接收通知的qq号
+qqgid: #监听的群
 qbot_public_mode: true #qq机器人群聊模式，默认私聊模式（默认false）
 default_priority: #新用户默认优先级（默认是1）
 no_ghproxy: true #更新资源是否不使用代理 默认false

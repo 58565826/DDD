@@ -84,7 +84,7 @@ type JdCookie struct {
 	ID           int    `gorm:"column:ID;primaryKey"`
 	Priority     int    `gorm:"column:Priority;default:1"`
 	CreateAt     string `gorm:"column:CreateAt"`
-	//LoseAt       string `gorm:"column:LoseAt"`
+	LoseAt       string `gorm:"column:LoseAt"`
 	PtKey        string `gorm:"column:PtKey"`
 	PtPin        string `gorm:"column:PtPin;unique"`
 	WsKey        string `gorm:"column:WsKey"`
@@ -117,7 +117,7 @@ type JdCookiePool struct {
 	ID       int    `gorm:"column:ID;primaryKey"`
 	PtKey    string `gorm:"column:PtKey;unique"`
 	PtPin    string `gorm:"column:PtPin"`
-	WsKey    string `gorm:"column:WsKey"`
+	//WsKey    string `gorm:"column:WsKey"`
 	LoseAt   string `gorm:"column:LoseAt"`
 	CreateAt string `gorm:"column:CreateAt"`
 }
@@ -220,7 +220,7 @@ func (ck *JdCookie) InPool(pt_key string) error {
 		if err := tx.Create(&JdCookiePool{
 			PtPin:    ck.PtPin,
 			PtKey:    pt_key,
-			WsKey:    ck.WsKey,
+			//WsKey:    ck.WsKey,
 			CreateAt: date,
 		}).Error; err != nil {
 			tx.Rollback()
@@ -229,7 +229,7 @@ func (ck *JdCookie) InPool(pt_key string) error {
 		tx.Model(ck).Updates(map[string]interface{}{
 			Available: True,
 			PtKey:     pt_key,
-			//LoseAt:    date,
+			LoseAt:    date,
 		})
 		return tx.Commit().Error
 	}
@@ -278,7 +278,7 @@ func NewJdCookie(ck *JdCookie) error {
 	if err := tx.Create(&JdCookiePool{
 		PtPin:    ck.PtPin,
 		PtKey:    ck.PtKey,
-		WsKey:    ck.WsKey,
+		//WsKey:    ck.WsKey,
 		CreateAt: date,
 	}).Error; err != nil {
 		tx.Rollback()
@@ -303,7 +303,7 @@ func UpdateCookie(ck *JdCookie) error {
 	if err := tx.Create(&JdCookiePool{
 		PtPin:    ck.PtPin,
 		PtKey:    ck.PtKey,
-		WsKey:    ck.WsKey,
+		//WsKey:    ck.WsKey,
 		CreateAt: date,
 	}).Error; err != nil {
 		tx.Rollback()

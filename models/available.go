@@ -182,7 +182,7 @@ func updateCookie() {
 		if len(cks[i].WsKey) > 0 {
 			time.Sleep(10 * time.Second)
 			ck := cks[i]
-			//JdCookie{}.Push(fmt.Sprintf("更新账号账号，%s", ck.Nickname))
+			//JdCookie{}.Push(fmt.Sprintf("更新账号，%s", ck.Nickname))
 			var pinky = fmt.Sprintf("pin=%s;wskey=%s;", ck.PtPin, ck.WsKey)
 			rsp, err := getKey(pinky)
 			if err != nil {
@@ -223,7 +223,7 @@ func updateCookie() {
 }
 
 func CookieOK(ck *JdCookie) bool {
-	// fmt.Println(ck.PtPin)
+	// fmt.Println(ck.WsKey)
 	cookie := "pt_key=" + ck.PtKey + ";pt_pin=" + ck.PtPin + ";"
 	// fmt.Println(cookie)
 	// jdzz(cookie, make(chan int64))

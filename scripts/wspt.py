@@ -4,8 +4,9 @@ requests.packages.urllib3.disable_warnings()
 ws=sys.argv[1]
 def getsign():
     try:
-       #sign = 'https://pan.smxy.xyz/sign'
         sign = 'https://sign.smxy.xyz/sign' # sign
+        # sign = 'https://pan.smxy.xyz/sign'
+        # sign = 'https://api.jds.codes/gentoken'
         s = requests.get(url=sign).json()
         svv = s['sv']
         stt = s['st']

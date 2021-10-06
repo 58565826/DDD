@@ -111,7 +111,7 @@ func initConfig() {
 		Config.Tyt = 8
 	}
 	if Config.Database == "" {
-		Config.Database = ExecPath + "/.xdd.db"
+		Config.Database = ExecPath + "/.ddd.db"
 	}
 	if Config.Npm == "" {
 		Config.Npm = "npm"

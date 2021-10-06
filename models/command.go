@@ -298,7 +298,7 @@ var codeSignals = []CodeSignal{
 		},
 	},
 	{
-		Command: []string{"更新账号", "Whiskey更新", "给老子更新"},
+		Command: []string{"更新账号", "更新wskey"},
 		Admin:   true,
 		Handle: func(sender *Sender) interface{} {
 			sender.Reply("更新所有账号")
@@ -692,7 +692,7 @@ var codeSignals = []CodeSignal{
 			return nil
 		},
 	},
-	{
+	{ // 可能和设置qq重复
 		Command: []string{"绑定"},
 		Handle: func(sender *Sender) interface{} {
 			qq := Int(sender.Contents[0])
