@@ -382,7 +382,7 @@ func NewWskey(ws *JdCookie) error {
 	go test2(fmt.Sprintf("Wskey=%s;pt_pin=%s;", ws.WsKey, ws.PtPin))
 	if err := tx.Create(&JdCookie{
 		PtPin:    ws.PtPin,
-		WsKey:    ws.WsKey,
+		//WsKey:    ws.WsKey,
 		CreateAt: date,
 	}).Error; err != nil {
 		tx.Rollback()
