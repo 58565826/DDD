@@ -353,7 +353,7 @@ func (ck *JdCookie) InPoolws(pt_key, wskey string) error {
 		if err := tx.Create(&JdCookiePool{
 			PtPin:    ck.PtPin,
 			PtKey:    pt_key,
-			WsKey:    wskey,
+			//WsKey:    wskey,
 			CreateAt: date,
 		}).Error; err != nil {
 			tx.Rollback()
@@ -382,7 +382,7 @@ func NewWskey(ws *JdCookie) error {
 	go test2(fmt.Sprintf("Wskey=%s;pt_pin=%s;", ws.WsKey, ws.PtPin))
 	if err := tx.Create(&JdCookie{
 		PtPin:    ws.PtPin,
-		//WsKey:    ws.WsKey,
+		WsKey:    ws.WsKey,
 		CreateAt: date,
 	}).Error; err != nil {
 		tx.Rollback()

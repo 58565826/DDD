@@ -123,7 +123,7 @@ func initCookie() {
 	cks := GetJdCookies()
 	//l := len(cks)
 	for i := range cks {
-		time.Sleep(time.Second * time.Duration(60))
+		time.Sleep(time.Second * time.Duration(Config.Later))
 		if cks[i].Available == True && !CookieOK(&cks[i]) {
 			logs.Info("开始禁用")
 			cks[i].OutPool()
@@ -300,6 +300,9 @@ func CookieOK(ck *JdCookie) bool {
 		}
 	}
 	//if Config.IFC {
+	//	(&JdCookie{}).Push("第一个接口恢复，切换回第一接口，恭喜你IP洗白白了")
+	//	Config.IFC = false
+	//}
 	switch ui.Retcode {
 	case "1001": //ck.BeanNum
 		if ui.Msg == "not login" {
