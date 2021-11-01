@@ -39,6 +39,7 @@ type Yaml struct {
 	Wskey               bool   `yaml:"Wskey"`
 	TGURL               string `yaml:"TGURL"`
 	SMSAddress          string `yaml:"SMSAddress"`
+	JDSignApi           string `yaml:"JDSignApi"`
 	IsAddFriend         bool   `yaml:"IsAddFriend"`
 	Lim                 int    `yaml:"Lim"`
 	Tyt                 int    `yaml:"Tyt"`
