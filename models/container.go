@@ -60,9 +60,9 @@ func initContainer() {
 			version, err := GetQlVersion(Config.Containers[i].Address)
 			if err == nil {
 				if Config.Containers[i].getToken() == nil {
-					logs.Info("青龙" + version + "登录成功")
+					logs.Info("青龙" + version + "通道登录成功")
 				} else {
-					logs.Warn("青龙" + version + "登录失败")
+					logs.Warn("青龙" + version + "通道登录失败")
 				}
 				Config.Containers[i].Type = "ql"
 				Config.Containers[i].Version = version
