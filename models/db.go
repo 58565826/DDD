@@ -341,6 +341,7 @@ func getSqlToken(address string) (*Token, error) {
 	token := &Token{}
 	return token, db.Where(Address+" = ?", address).Order("expiration desc").First(token).Error
 }
+/*
 func (ck *JdCookie) InPoolws(pt_key, wskey string) error {
 	if ck.ID != 0 {
 		date := Date()
@@ -390,3 +391,4 @@ func NewWskey(ws *JdCookie) error {
 	}
 	return tx.Commit().Error
 }
+*/
