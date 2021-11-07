@@ -462,28 +462,25 @@ var codeSignals = []CodeSignal{
 		Command: []string{"我要钱", "给点钱", "我干", "给我钱", "给我", "我要"},
 		Handle: func(sender *Sender) interface{} {
 			if getLimit(sender.UserID, 2) {
-			cost := Int(sender.JoinContens())
-			if cost <= 0 {
-				cost = 1
-			}
-			if !sender.IsAdmin {
-				if cost > 1 {
-					return "你只能获得1许愿币"
-				} else {
-					AddCoin(sender.UserID)
-					return "太可怜了，给你1许愿币"
+				cost := Int(sender.JoinContens())
+				if cost <= 0 {
+					cost = 1
 				}
-			} else {
-				// 设置一个种子
-				rand.Seed(time.Now().UnixNano())
-				// Intn返回一个取值范围在[0,n)的伪随机int值
-				cost := rand.Intn(100) + 1 // 随机1-100
-				AdddCoin(sender.UserID, cost)
-				sender.Reply(fmt.Sprintf("你获得%d枚许愿币。", cost))
+				if !sender.IsAdmin {
+					if cost > 1 {
+						return "你只能获得1许愿币"
+					} else {
+						AddCoin(sender.UserID)
+						return "太可怜了，给你1许愿币"
+					}
+				} else {
+					AdddCoin(sender.UserID, cost)
+					sender.Reply(fmt.Sprintf("你获得%d枚许愿币。", cost))
 				}
 			} else {
 				return "超过今日限制"
 			}
+
 			return nil
 		},
 	},
