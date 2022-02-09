@@ -3,8 +3,8 @@ containers: #容器，可配置多个
   - address: http://192.168.31.233:5700 #青龙、v1v2v3v4v5访问地址
     username: admin #用户名-青龙（config文件夹-auth.json文件找）
     password: admin #密码（青龙config文件夹-auth.json文件找）
-    cid: #openapi 用户名
-    secret: #openapi 密码
+    ClientId: #openapi 用户名
+    ClientSecret: #openapi 密码
     weigth:  #权重 balance模式下权重越高分得的ck越多，默认1
     mode: parallel #单独对容器进行模式设置（自己选）
     limit:  #限制容器ck数目
@@ -13,16 +13,21 @@ containers: #容器，可配置多个
   #  password: admin
   # - path: /ql/config/config.sh #本地配置文件路径 v1v2v3v4v5和不知名容器的配置
   #- path: /Users/cdle/Desktop/jd_study/jdc/list.sh
+
 AtTime: 6 #填写1-12之间的数  填错自负默认为10  10点容易出现高峰超时。
 IsHelp: true #填写true或者false  false
 IsOldV4: false #填写true或者false  false是否新版或者旧版V4
 Wskey: true # 填空默认禁用wskey转换 需要的填true
 IsAddFriend: #是否自动添加好友,填写true或者false,默认false
-Lim: #填写1-N 代表限制次数
+Lim: 2 #填写1-N 代表限制次数，每日查询限制
 Tyt: #填写1-N 代表推一推需要的互助值，默认为8
+JDCAddress: #JDC 地址
 Later: #延时防止黑IP自己设置 默认60 不怕黑的改为1即可 单位是秒
-JDSignApi: 
-ApiToken: #短信接入token参数
+JDSignApi: #获取京东sign接口
+ApiToken: aaaaaa # xdd api token，短信接入token参数
+AppId: #精品库AppId
+AppKey: #精品库AppKey
+UnionId: #京粉ID
 
 theme:  #https://ghproxy.com/https://raw.githubusercontent.com/58563528/DDD/main/theme/noodin.html #自定义主题，支持本地、网络路径
 static: ./static #静态文件 便于自定义二维码页面时，引入css、js等文件（不用动）
@@ -31,7 +36,7 @@ master: jd_xxxxx #管理员账户pin，有多个用'&'拼接
 #sqlite3 填路径，默认 ./.dmm
 #mysql填 user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
 #postgres填 host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai
-database: /ql/db/.xdd.db  #数据库位置，默认./.xdd.db #
+database:  #数据库位置，默认./.xdd.db #
 qywx_key:  #企业微信推送key（这个就是企业微信机器人的key）
 daily_push:  #定时任务（这个我暂时没有配置）
 resident: #均衡模式下所有容器共同的账号pin，有多个用'&'拼接。不建议填写，后续实现指定账号助力功能
@@ -42,10 +47,26 @@ telegram_user_id: #telegrame user id
 TGURL: #填写TG代理地址参考https://www.kejiwanjia.com/server/5221.html#3worker
 qquid: #接收通知的qq号
 qqgid: #监听的群
+qqgids: #监听多个QQ群，QQ群2&QQ群3
 qbot_public_mode: true #qq机器人群聊模式，默认私聊模式（默认false）
 default_priority: #新用户默认优先级（默认是1）
 no_ghproxy: true #更新资源是否不使用代理 默认false
 
 daily_asset_push_cron: 0 9 * * * #日常资产推送时间
+
+tasks:
+  - cron: 0 6 * * *
+    path: https://raw.githubusercontent.com/cdle/xdd/main/scripts/jd_goodMorning.js
+    enable: true
+    word: 早起福利
+    mode: obo
+  - cron: 0 0 * * *
+    path: https://raw.githubusercontent.com/cdle/xdd/main/scripts/jd_angryBean.js
+    enable: true
+    word: 抢京豆
+    mode: alo
+    envs:
+      - name: angryBeanPins
+      - value: jd_xxxxx&jd_ooooo
 repos:
   - git: https://github.com/shufflewzc/faker2.git
